@@ -30,6 +30,7 @@ d3Board.create = function(el, props, state) {
 
   var hudTable = hud.append("table")
     .selectAll('tr').data([["Index", "stateIndex"],
+                           ["Players", "players"],
                            ["Last", "lastAction"],
                            ["Valid", "validActions"]]);
   hudTable.enter().append('tr')
@@ -56,7 +57,7 @@ d3Board.update = function(el, state, dims) {
   this._drawBuildings(el, scales, hexSize, gameData, prevScales);
   this._drawRoads(el, scales, hexSize, gameData, prevScales);
   this._drawCoords(el, scales, hexSize);
-  this._updateHUD(el, state);
+  this._updateHUD(el, scales.playerColor, state);
 };
 
 d3Board.destroy = function(el) {
@@ -90,8 +91,14 @@ function _qrpFromPoint(point) {
   return {q: point.coord[0], r: point.coord[1], p: point.position};
 }
 
+function _edgeFromQRPs(edge) {
+  var qrp1 = _qrpFromPoint(edge.point1),
+      qrp2 = _qrpFromPoint(edge.point2);
+  return [qrp1, qrp2];
+}
+
 function _edgeToString(edge) {
-  return edge.map(_qrToString).join("-");
+  return '(' + edge.map(_qrpToString).join(")-(") + ')';
 }
 
 d3Board._process = function (gameState) {
@@ -110,9 +117,7 @@ d3Board._process = function (gameState) {
 
   data.roads = gameState.board.roads.map(function (a) {
     var edge = a[0], onEdge = a[1],
-        qrp1 = _qrpFromPoint(edge.point1),
-        qrp2 = _qrpFromPoint(edge.point2),
-        qrpEdge = [qrp1, qrp2];
+        qrpEdge = _edgeFromQRPs(edge);
     if (!onEdge) return null;
     return { id: _edgeToString(qrpEdge),
              edge: qrpEdge,
@@ -354,13 +359,73 @@ d3Board._drawCoords = function(el, scales, hexSize) {
   coords.exit().remove();
 };
 
-d3Board._updateHUD = function(el, state) {
+function _showRes(res) {
+  var reduced = {};
+  for (var i in res) {
+    if (res[i] != 0) reduced[i] = res[i];
+  }
+  return JSON.stringify(reduced);
+}
+
+function _maybe(obj, propKey) {
+  var props = propKey.split('.');
+  if (props.length == 1 && props[0] == "") return obj;
+
+  var firstKey = props[0];
+  if (obj.hasOwnProperty(firstKey)) return _maybe(obj[firstKey], props.slice(1).join('.'));
+  else return null;
+}
+
+function _showItems(items) {
+  var realItems = items.filter(function(c) { return !c.potential;});
+  return realItems.map(function (item) {
+    var point = _maybe(item, 'building.building.edifice.onPoint.point');
+    var edge = _maybe(item, 'building.building.roadway.onEdge.edge');
+    var card = _maybe(item, 'card.card');
+
+    if (point) {
+      var buildingType = _maybe(item, 'building.building.edifice.onPoint.buildingType');
+      return buildingType + " " + '(' + _qrpToString(_qrpFromPoint(point)) + ')';
+    } else if (edge) {
+      return "road " + _edgeToString(_edgeFromQRPs(edge));
+    } else if (card) {
+      return card;
+    } else return "ERROR unknown item type: " + JSON.stringify(item); //should be one of known types!
+  }).filter(function (d) { return !!d; }).join('; ');
+}
+
+d3Board._updateHUD = function(el, playerColor, state) {
   var hud = d3.select(el).select('#hud'),
       stateIndex = hud.select('#stateIndex'),
+      players = hud.select('#players'),
       lastAction = hud.select('#lastAction'),
       validActions = hud.select('#validActions');
 
   stateIndex.text(state.index);
+
+  var playersD = players.selectAll(".player")
+    .data(state.data.players, function (d) { return d.playerIndex; });
+
+  playersD.enter().append("div")
+    .attr('class', 'player')
+    .attr('id', function (d) { return "player" + d.playerIndex; })
+    .style('color', function (d) { return playerColor(d.playerColor); });
+
+  var playerInfo = playersD.selectAll(".playerInfo")
+    .data(function (d) { return ["Player " + d.playerIndex,
+                                 _showRes(d.resources),
+                                 _showItems(d.constructed)]; 
+                       });
+
+  playerInfo.enter().append("div")
+    .attr('class', 'playerInfo');
+
+  playerInfo.text(function (d) { return d; });
+
+  playerInfo.exit().remove();
+
+  playersD.exit().remove();
+
   lastAction.text(JSON.stringify(state.data.lastAction));
   validActions.text(JSON.stringify(state.data.validActions));
 };
