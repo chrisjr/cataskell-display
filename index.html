@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="d3.min.js"></script>
+</head>
+
+<body>
+  <div>
+    <label for="statesRange">Step through game</label>
+    <input type="range" id="statesRange" min="0" max="1" value="0" oninput="switchState(value)"/>
+  </div>
+  <div>
+    <label for="showCoords">Show coords</label>
+    <input type="checkbox" id="showCoords" onchange="doShowCoords()"/>
+  </div>
+  <div id="board"></div>
+
+  <script src="colorbrewer.js"></script>
+  <script src="d3Board.js"></script>
+  <script src="games.js"></script>
+  <script>
+  var dims,
+      domain = {
+        xy: [-4, 4]
+      };
+
+  function getData(i) {
+    return {
+      index: i,
+      domain: domain,
+      data: data[i]
+    };
+  }
+  document.addEventListener("DOMContentLoaded", function(event) {
+    var range = document.getElementById("statesRange");
+    range.max = data.length - 1;
+    dims = d3Board.create(document.getElementById("board"), {
+        width: 500,
+        height: 500,
+        margin: {
+          top: 30,
+          right: 30,
+          bottom: 30,
+          left: 30
+        }
+      },
+      getData(0)
+    );
+  });
+
+  function switchState(stateIndex) {
+    d3Board.update(document.getElementById("board"), getData(stateIndex), dims);
+  }
+
+  function doShowCoords() {
+    var wasVisible = d3.select(".coords").attr('visibility') == 'visible';
+    d3.select(".coords").attr("visibility", wasVisible ? "hidden" : "visible");
+  }
+  </script>
+</body>
+
+</html>
