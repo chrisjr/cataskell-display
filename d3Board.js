@@ -235,10 +235,18 @@ d3Board._drawHexes = function(el, scales, hexSize, data, prevScales) {
     .style('fill', 'rgba(0,0,0,0.6)')
     .style('font-size', '28px');
 
+  hexGroup.append('circle')
+    .attr('class', 'robber')
+    .attr('r', 10)
+    .style('fill', 'black');
+
   hex.style('fill', function(d) { return scales.hexColor(d.hex.terrain); })
     .attr('transform', function(d) { 
         return "translate(" + scales.x(scales.fromQR(d.qr).x) + "," + scales.y(scales.fromQR(d.qr).y) + ")";
       });
+
+  hex.selectAll('.robber')
+    .style('visibility', function (d) { return d.hex.hasRobber ? "visible" : "hidden"; });
 
   if (prevScales) {
     hex.exit()

@@ -8,7 +8,7 @@
 <body>
   <div>
     <label for="statesRange">Step through game</label>
-    <input type="range" id="statesRange" min="0" max="1" value="0" oninput="switchState(value)"/>
+    <input type="range" id="statesRange" min="0" max="100" value="16" oninput="switchState(value)"/>
   </div>
   <div>
     <label for="showCoords">Show coords</label>
@@ -45,7 +45,7 @@
           left: 30
         }
       },
-      getData(0)
+      getData(range.value)
     );
   });
 
