@@ -210,7 +210,7 @@ d3Board._drawHexes = function(el, scales, hexSize, data, prevScales) {
 
   var hex = g.selectAll('.hexes')
     .selectAll('.hex')
-      .data(data.hexes, function(d) { return d.id; });
+      .data(data.hexes, function(d) { return d.id + d.hex.hasRobber; });
 
   function _textHexPoints(size) {
     return _hexPoints(size).map(function(h) { return h.join(","); }).join(" ");
@@ -238,7 +238,8 @@ d3Board._drawHexes = function(el, scales, hexSize, data, prevScales) {
   hexGroup.append('circle')
     .attr('class', 'robber')
     .attr('r', 10)
-    .style('fill', 'black');
+    .style('fill', 'black')
+    .style('visibility', 'hidden');
 
   hex.style('fill', function(d) { return scales.hexColor(d.hex.terrain); })
     .attr('transform', function(d) { 
@@ -246,7 +247,7 @@ d3Board._drawHexes = function(el, scales, hexSize, data, prevScales) {
       });
 
   hex.selectAll('.robber')
-    .style('visibility', function (d) { return d.hex.hasRobber ? "visible" : "hidden"; });
+    .style('visibility', function (d) { return d.hex.hasRobber ? "visible" : "hidden";});
 
   if (prevScales) {
     hex.exit()
