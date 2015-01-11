@@ -42,7 +42,7 @@ d3Board.create = function(el, props, state) {
             else d3.select(this).attr('id', d);
         });
 
-  this.update(el, state, dims);
+  try {this.update(el, state, dims); } catch (e) { console.error(e); } // finish create even if game data is missing
   return dims;
 };
 
