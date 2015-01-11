@@ -21,6 +21,7 @@
   <script src="games.js"></script>
   <script>
   var dims,
+      data = data || [],
       domain = {
         xy: [-4, 4]
       };
@@ -29,12 +30,12 @@
     return {
       index: i,
       domain: domain,
-      data: data[i]
+      data: data ? data[i] : {}
     };
   }
   document.addEventListener("DOMContentLoaded", function(event) {
     var range = document.getElementById("statesRange");
-    range.max = data.length - 1;
+    range.max = data && data.length ? data.length - 1 : 0;
     dims = d3Board.create(document.getElementById("board"), {
         width: 500,
         height: 500,
@@ -51,6 +52,12 @@
 
   function switchState(stateIndex) {
     d3Board.update(document.getElementById("board"), getData(stateIndex), dims);
+  }
+
+  function showState(state) {
+    var fakeData = getData(0);
+    fakeData.data = state;
+    d3Board.update(document.getElementById("board"), fakeData, dims);
   }
 
   function doShowCoords() {
