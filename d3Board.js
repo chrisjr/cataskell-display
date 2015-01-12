@@ -32,6 +32,7 @@ d3Board.create = function(el, props, state) {
     .selectAll('tr').data([["Index", "stateIndex"],
                            ["Players", "players"],
                            ["Last", "lastAction"],
+                           ["Trades", "openTrades"],
                            ["Valid", "validActions"]]);
   hudTable.enter().append('tr')
     .selectAll('td').data(function (d) { return d;})
@@ -385,7 +386,12 @@ function _maybe(obj, propKey) {
   else return null;
 }
 
+function _snd(tuple) {
+  return tuple[1];
+}
+
 function _showItems(items) {
+  if (!items) return "";
   var realItems = items.filter(function(c) { return !c.potential;});
   return realItems.map(function (item) {
     var point = _maybe(item, 'building.building.edifice.onPoint.point');
@@ -403,17 +409,44 @@ function _showItems(items) {
   }).filter(function (d) { return !!d; }).join('; ');
 }
 
+function _showOffer(offer) {
+  return _showRes(offer.offering) + " for " + _showRes(offer.asking) + " offered by " + offer.offeredBy;
+}
+
+function _showTrades(trades) {
+  if (!trades) return "";
+  return trades.map(function (trade) {
+    var offer, context = "";
+    if ("offer" in trade) { // is a trade offer
+      offer = _maybe(trade, "offer.offer");
+      context = "Offer ";
+    } else if ("accept" in trade) { // trade accept
+      offer = _maybe(trade, "accept.offer");
+      context = "Accept ";
+    } else if ("reject" in trade) { // trade reject
+      offer = _maybe(trade, "reject.offer");
+      context = "Reject ";
+    } else if ("completetrade" in trade) {
+      // should never be in open trades
+    } else if ("canceltrade" in trade) {
+      // should never be in open trades
+    } else return null;
+    return context + "(" + _showOffer(offer) + ")";
+  }).filter(function (d) { return !!d; }).join(', ');
+}
+
 d3Board._updateHUD = function(el, playerColor, state) {
   var hud = d3.select(el).select('#hud'),
       stateIndex = hud.select('#stateIndex'),
       players = hud.select('#players'),
       lastAction = hud.select('#lastAction'),
-      validActions = hud.select('#validActions');
+      validActions = hud.select('#validActions'),
+      openTrades = hud.select('#openTrades');
 
   stateIndex.text(state.index);
 
   var playersD = players.selectAll(".player")
-    .data(state.data.players, function (d) { return d.playerIndex; });
+    .data(state.data.players.map(_snd), function (d) { return d.playerIndex; });
 
   playersD.enter().append("div")
     .attr('class', 'player')
@@ -435,6 +468,7 @@ d3Board._updateHUD = function(el, playerColor, state) {
 
   playersD.exit().remove();
 
-  lastAction.text(JSON.stringify(state.data.lastAction));
+  lastAction.text(JSON.stringify(state.data.lastAction || []));
   validActions.text(JSON.stringify(state.data.validActions));
+  openTrades.text(_showTrades(state.data.openTrades));
 };
