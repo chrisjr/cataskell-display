@@ -471,10 +471,12 @@ d3Board._updateHUD = function(el, playerColor, state) {
     .style('color', function (d) { return playerColor(d.playerColor); });
 
   var playerInfo = playersD.selectAll(".playerInfo")
-    .data(function (d) { return ["Player " + d.playerIndex,
-                                 _showRes(d.resources),
-                                 _showItems(d.constructed)]; 
-                       });
+    .data(function (d) { 
+      var i = d.playerIndex;
+      return [(i == state.data.currentPlayer ? "* " : "") + "Player " + i,
+              _showRes(d.resources),
+              _showItems(d.constructed)]; 
+    });
 
   playerInfo.enter().append("div")
     .attr('class', 'playerInfo');
