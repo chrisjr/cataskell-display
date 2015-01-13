@@ -489,7 +489,7 @@ d3Board._updateHUD = function(el, playerColor, state) {
   validActions.text(JSON.stringify(state.data.validActions));
 
   var openTradesD = openTrades.selectAll(".openTrade")
-    .data(_processTrades(state.data.openTrades, state.data.players));
+    .data(_processTrades(state.data.openTrades, state.data.players), JSON.stringify);
 
   openTradesD.enter().append("div")
     .attr("class", "openTrade")
