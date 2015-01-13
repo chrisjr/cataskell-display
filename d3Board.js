@@ -413,26 +413,43 @@ function _showOffer(offer) {
   return _showRes(offer.offering) + " for " + _showRes(offer.asking) + " offered by " + offer.offeredBy;
 }
 
-function _showTrades(trades) {
+function _processTrades(trades, players) {
   if (!trades) return "";
+  function indexToColor(i) {
+    var c = "";
+    players.forEach(function(p) {
+      if (p[0] == i) {
+        c = p[1].playerColor;
+      }
+    });
+    return c;
+  }
+
+
   return trades.map(function (trade) {
-    var offer, context = "";
+    var offer, context = "", color;
     if ("offer" in trade) { // is a trade offer
       offer = _maybe(trade, "offer.offer");
       context = "Offer ";
+      color = indexToColor(_maybe(trade, "offer.offer.offeredBy"));
     } else if ("accept" in trade) { // trade accept
       offer = _maybe(trade, "accept.offer");
-      context = "Accept ";
+      var accepter = _maybe(trade,"accept.accepter");
+      context = "Accept by " + accepter + " ";
+      color = indexToColor(accepter);
     } else if ("reject" in trade) { // trade reject
       offer = _maybe(trade, "reject.offer");
-      context = "Reject ";
+      var rejecter = _maybe(trade,"reject.rejecter");
+      context = "Reject by " + rejecter + " ";
+      color = indexToColor(rejecter);
     } else if ("completetrade" in trade) {
       // should never be in open trades
     } else if ("canceltrade" in trade) {
       // should never be in open trades
     } else return null;
-    return context + "(" + _showOffer(offer) + ")";
-  }).filter(function (d) { return !!d; }).join(', ');
+
+    return {txt: context + "(" + _showOffer(offer) + ")", color: color};
+  }).filter(function (d) { return !!d; });
 }
 
 d3Board._updateHUD = function(el, playerColor, state) {
@@ -470,5 +487,14 @@ d3Board._updateHUD = function(el, playerColor, state) {
 
   lastAction.text(JSON.stringify(state.data.lastAction || []));
   validActions.text(JSON.stringify(state.data.validActions));
-  openTrades.text(_showTrades(state.data.openTrades));
+
+  var openTradesD = openTrades.selectAll(".openTrade")
+    .data(_processTrades(state.data.openTrades, state.data.players));
+
+  openTradesD.enter().append("div")
+    .attr("class", "openTrade")
+    .style('color', function (d) { return d.color ? playerColor(d.color) : "#000";})
+    .text(function (d) { return d.txt;});
+
+  openTradesD.exit().remove();
 };
