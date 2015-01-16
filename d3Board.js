@@ -30,6 +30,7 @@ d3Board.create = function(el, props, state) {
 
   var hudTable = hud.append("table")
     .selectAll('tr').data([["Index", "stateIndex"],
+                           ["Phase", "phase"],
                            ["Players", "players"],
                            ["Last", "lastAction"],
                            ["Trades", "openTrades"],
@@ -455,12 +456,14 @@ function _processTrades(trades, players) {
 d3Board._updateHUD = function(el, playerColor, state) {
   var hud = d3.select(el).select('#hud'),
       stateIndex = hud.select('#stateIndex'),
+      phase = hud.select('#phase'),
       players = hud.select('#players'),
       lastAction = hud.select('#lastAction'),
       validActions = hud.select('#validActions'),
       openTrades = hud.select('#openTrades');
 
   stateIndex.text(state.index);
+  phase.text(JSON.stringify(state.data.phase));
 
   var playersD = players.selectAll(".player")
     .data(state.data.players.map(_snd), function (d) { return d.playerIndex; });
